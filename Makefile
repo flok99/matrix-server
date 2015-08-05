@@ -1,4 +1,4 @@
-CXXFLAGS=-Wall -O3 -ggdb3 -fno-strict-aliasing -std=c++0x -Iinclude `pkg-config --cflags freetype2` `pkg-config --cflags jansson` `pkg-config --cflags fontconfig` -fno-omit-frame-pointer -fsanitize=address
+CXXFLAGS=-Wall -O3 -ggdb3 -fno-strict-aliasing -std=c++0x -Iinclude `pkg-config --cflags freetype2` `pkg-config --cflags jansson` `pkg-config --cflags fontconfig`
 LDFLAGS+=-Llib -ggdb3 -lrgbmatrix -lrt -lm -pthread `pkg-config --libs freetype2` `pkg-config --libs jansson` `pkg-config --libs fontconfig`
 
 all : matrix-server

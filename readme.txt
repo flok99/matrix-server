@@ -9,6 +9,7 @@ Note: the low-level code for pushing bits to the panels is (C) Henner Zeller <h.
 Only the code that displays the scroll texts and videostreams etc is (C) folkert van heusden <mail@vanheusden.com>.
 Maybe some of this all is copyrighted by Adafruit.
 
+Note: you need to change the lib/Makefile file to suit your setup. For example the adafruit "hat" requires a special compile switch. When not doing so, you may not see anything on your led-matrix.
 
 You can send json-encoded commands via udp or udp to this program:
 
@@ -19,7 +20,6 @@ You can send json-encoded commands via udp or udp to this program:
 	import sys
 
 	UDP_IP = 'localhost'
-	#UDP_PORT = 5002
 	UDP_PORT = 2003
 	MESSAGE = sys.argv[1]
 

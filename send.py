@@ -4,8 +4,9 @@ import json
 import socket
 import sys
 
-UDP_IP = 'localhost'
-UDP_PORT = 3333
+UDP_IP = '127.0.0.1'
+UDP_PORT = 2003
+MESSAGE = sys.argv[1]
 
 json_obj = dict()
 json_obj['text'] = '   $rHello, world! '

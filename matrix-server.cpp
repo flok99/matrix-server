@@ -220,6 +220,8 @@ public:
 	}
 
 	void Run() {
+		printf("display_updater thread started\n");
+
 		set_thread_name(pthread_self(), "display_updater");
 
 		const int us_for_fps = MILLION / fps;
@@ -258,6 +260,8 @@ public:
 		}
 
 		c -> Clear();
+
+		printf("display_updater thread terminating\n");
 	}
 };
 
@@ -802,7 +806,7 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
-	RGBMatrix m(&io, rows_on_display, chained_displays);
+	RGBMatrix m(&io, rows_on_display, chained_displays, 1);
 
 	if (pwm_bits > 0 && !m.SetPWMBits(pwm_bits))
 		error_exit(false, "Invalid range of pwm-bits");
@@ -845,7 +849,6 @@ int main(int argc, char *argv[]) {
 
 	// Stopping threads and wait for them to join.
 	delete image_gen;
-	m.UpdateScreen();
 
 	font::uninit_fonts();
 
