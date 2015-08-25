@@ -38,6 +38,16 @@ typedef struct {
 
 std::atomic_bool global_terminate;
 
+std::atomic_bool enabled;
+
+void toggle(int sig)
+{
+	enabled = !enabled;
+
+	int dummy = enabled;
+	printf("new status: %d\n", dummy);
+}
+
 void sigh(int sig)
 {
 	printf("Caught signal %d\n", sig);
@@ -220,44 +230,77 @@ public:
 	}
 
 	void Run() {
+		printf("display_updater thread started\n");
+
 		set_thread_name(pthread_self(), "display_updater");
 
 		const int us_for_fps = MILLION / fps;
 		const int64_t start = get_ts();
 		const int bytes = db -> w * db -> h * 3;
+		bool was_enabled = enabled;
 
 		for(;!global_terminate;) {
-			memset(db -> data, 0x00, bytes);
+			if (was_enabled != enabled) {
+				int dummy = enabled;
 
-			if (db -> want_flash.exchange(false))
+				printf("enabled state changed %d to %d\n", was_enabled, dummy);
+
 				flash();
+				was_enabled = enabled;
 
-			bool anything_drawn = false, anything_running = false;
-			if (db -> need_update.exchange(false)) {
-				// printf("need_update true\n");
-				drawFromClients(&anything_drawn, &anything_running);
-
-				if (!anything_running) {
-					c -> Clear();
-					anything_drawn = true;
+				if (enabled) {
+					draw_centered("ON");
+					printf(" *** ON ***\n");
 				}
-			}
-
-			if (db -> screensaver && anything_drawn == false)
-				anything_drawn = screensaver();
-
-
-			if (anything_drawn)
+				else {
+					draw_centered("OFF");
+					printf(" *** OFF ***\n");
+				}
 				drawBuffer();
 
-			int64_t now = get_ts();
-			int64_t sleep_left = us_for_fps - ((now - start) % us_for_fps);
+				sleep(1);
 
-			if (sleep_left > 0)
-				usleep(sleep_left);
+				c -> Clear();
+			}
+
+			if (enabled) {
+				memset(db -> data, 0x00, bytes);
+
+				if (db -> want_flash.exchange(false))
+					flash();
+
+				bool anything_drawn = false, anything_running = false;
+				if (db -> need_update.exchange(false)) {
+					// printf("need_update true\n");
+					drawFromClients(&anything_drawn, &anything_running);
+
+					if (!anything_running) {
+						c -> Clear();
+						anything_drawn = true;
+					}
+				}
+
+				if (db -> screensaver && anything_drawn == false)
+					anything_drawn = screensaver();
+
+
+				if (anything_drawn)
+					drawBuffer();
+
+				int64_t now = get_ts();
+				int64_t sleep_left = us_for_fps - ((now - start) % us_for_fps);
+
+				if (sleep_left > 0)
+					usleep(sleep_left);
+			}
+			else {
+				usleep(501000);
+			}
 		}
 
 		c -> Clear();
+
+		printf("display_updater thread terminating\n");
 	}
 };
 
@@ -722,6 +765,7 @@ void help(void)
 
 int main(int argc, char *argv[]) {
 	global_terminate = false;
+	enabled = false;
 
 	bool correct_luminance = true, screensaver = false, do_fork = false;
 	int rows_on_display = 32, chained_displays = 1, pwm_bits = 0, brightness_in = 50, fps = 50;
@@ -792,6 +836,8 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT, sigh);
 	signal(SIGTERM, sigh);
 
+	signal(SIGUSR1, toggle);
+
 	srand(time(NULL));
 
 	font::init_fonts();
@@ -802,7 +848,7 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
-	RGBMatrix m(&io, rows_on_display, chained_displays);
+	RGBMatrix m(&io, rows_on_display, chained_displays, 1);
 
 	if (pwm_bits > 0 && !m.SetPWMBits(pwm_bits))
 		error_exit(false, "Invalid range of pwm-bits");
@@ -845,7 +891,6 @@ int main(int argc, char *argv[]) {
 
 	// Stopping threads and wait for them to join.
 	delete image_gen;
-	m.UpdateScreen();
 
 	font::uninit_fonts();
 

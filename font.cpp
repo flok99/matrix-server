@@ -15,12 +15,14 @@ std::map<std::string, FT_Face> font::font_cache;
 
 void font::draw_bitmap(const FT_Bitmap *const bitmap, const int target_height, const FT_Int x, const FT_Int y, uint8_t r, uint8_t g, uint8_t b, const bool invert, const bool underline, const bool rainbow)
 {
+#if 0
 	assert(x >= 0);
 	assert(x < w);
 	assert(y >= 0);
 	assert(y < target_height);
 	assert(w >= 0);
 	assert(target_height >= 0);
+#endif
 
 	if (invert)
 	{
